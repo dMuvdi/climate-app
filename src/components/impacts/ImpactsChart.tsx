@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import Chart, { ChartDataset, TooltipItem, TooltipModel } from 'chart.js/auto';
+import Chart, { TooltipItem, TooltipModel } from 'chart.js/auto';
 import { ClimateData } from '@/types/climate';
 
 interface ImpactsChartProps {
@@ -176,7 +176,7 @@ export const ImpactsChart: React.FC<ImpactsChartProps> = ({ data, isLoading = fa
                     },
                     tooltip: {
                         callbacks: {
-                            label: function (this: TooltipModel<any>, tooltipItem: TooltipItem<any>) {
+                            label: function (this: TooltipModel<"bar" | "pie" | "doughnut" | "line" | "radar">, tooltipItem: TooltipItem<"bar" | "pie" | "doughnut" | "line" | "radar">) {
                                 const dataset = tooltipItem.dataset;
                                 if (chartConfig.type === 'pie' || chartConfig.type === 'doughnut') {
                                     return `${tooltipItem.label}: ${tooltipItem.formattedValue}%`;
