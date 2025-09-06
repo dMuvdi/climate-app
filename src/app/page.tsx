@@ -62,7 +62,7 @@ function ClimateApp() {
       case 'timeSeries':
         return <TimeSeriesTab data={timeSeriesData || []} isLoading={isLoading} />;
       case 'impacts':
-        return <ImpactsChart data={data} isLoading={isLoading} />;
+        return <ImpactsChart data={data} isLoading={isLoading} region={selectedLocation} />;
       case 'action':
         return <ActionTab data={data} isLoading={isLoading} region={selectedLocation} />;
       default:

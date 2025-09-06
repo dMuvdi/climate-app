@@ -34,12 +34,14 @@ class ClimateAnalysisService {
         {
             title: "Estrés en los Páramos Andinos",
             description: "El aumento de la temperatura está causando que los ecosistemas de páramo, vitales para el suministro de agua de Colombia, se reduzcan. Especies únicas de plantas y animales que dependen de estas condiciones frías están perdiendo su hábitat.",
-            data_labels: ["Impacto en Temporada Húmeda (%)", "Impacto en Temporada Seca (%)"],
+            data_labels: ["Estrés por Temperatura (%)", "Pérdida de Humedad (%)", "Riesgo de Especies (%)"],
             data_calculator: (data) => {
                 const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
+                const avgHumidity = data.reduce((sum, d) => sum + d.humidity, 0) / data.length;
                 const tempStress = Math.min(100, Math.max(0, (avgTemp - 15) * 10));
-                const humidityStress = Math.min(100, Math.max(0, (85 - data.reduce((sum, d) => sum + d.humidity, 0) / data.length) * 2));
-                return [Math.round(tempStress), Math.round(humidityStress)];
+                const humidityStress = Math.min(100, Math.max(0, (85 - avgHumidity) * 2));
+                const speciesRisk = Math.min(100, Math.max(0, (tempStress + humidityStress) / 2));
+                return [Math.round(tempStress), Math.round(humidityStress), Math.round(speciesRisk)];
             },
             conditions: (data) => {
                 const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
@@ -49,11 +51,15 @@ class ClimateAnalysisService {
         {
             title: "Blanqueamiento de Corales",
             description: "Las temperaturas del mar inusualmente altas estresan a los corales, causando que expulsen las algas que viven en sus tejidos y les dan color. Este 'blanqueamiento' puede llevar a la muerte del coral y la pérdida de biodiversidad marina.",
-            data_labels: ["Mortalidad de Coral Histórica (%)", "Riesgo de Mortalidad Actual (%)"],
+            data_labels: ["Coral Saludable (%)", "Coral Estresado (%)", "Coral Muerto (%)", "Recuperación (%)"],
             data_calculator: (data) => {
                 const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
                 const coralRisk = Math.min(100, Math.max(0, (avgTemp - 28) * 15));
-                return [25, Math.round(coralRisk)];
+                const healthy = Math.max(0, 100 - coralRisk - 25);
+                const stressed = Math.min(50, coralRisk);
+                const dead = Math.min(25, coralRisk * 0.3);
+                const recovery = Math.min(20, 100 - coralRisk);
+                return [Math.round(healthy), Math.round(stressed), Math.round(dead), Math.round(recovery)];
             },
             conditions: (data) => {
                 const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
@@ -63,12 +69,14 @@ class ClimateAnalysisService {
         {
             title: "Alteración de Ciclos Hídricos",
             description: "La deforestación y el cambio climático alteran el ciclo del agua. Lluvias más intensas en periodos cortos pueden causar erosión y afectar a los anfibios, que son muy sensibles a los cambios de humedad y calidad del agua.",
-            data_labels: ["Aumento de Escorrentía (%)", "Riesgo para Anfibios (%)"],
+            data_labels: ["Escorrentía Normal (%)", "Escorrentía Alta (%)", "Erosión del Suelo (%)"],
             data_calculator: (data) => {
                 const avgPrecip = data.reduce((sum, d) => sum + d.precipitation, 0) / data.length;
                 const runoffRisk = Math.min(100, Math.max(0, avgPrecip * 3));
-                const amphibianRisk = Math.min(100, Math.max(0, (avgPrecip - 5) * 8));
-                return [Math.round(runoffRisk), Math.round(amphibianRisk)];
+                const normalRunoff = Math.max(0, 100 - runoffRisk);
+                const highRunoff = Math.min(60, runoffRisk);
+                const erosion = Math.min(40, runoffRisk * 0.5);
+                return [Math.round(normalRunoff), Math.round(highRunoff), Math.round(erosion)];
             },
             conditions: (data) => {
                 const avgPrecip = data.reduce((sum, d) => sum + d.precipitation, 0) / data.length;
@@ -78,12 +86,13 @@ class ClimateAnalysisService {
         {
             title: "Riesgo de Incendios Forestales",
             description: "Períodos secos más largos y vientos fuertes crean las condiciones perfectas para la propagación de incendios. Estos destruyen vastas áreas de selva, liberan carbono y amenazan a innumerables especies.",
-            data_labels: ["Humedad Relativa (%)", "Riesgo de Incendio Relativo (%)"],
+            data_labels: ["Temperatura (°C)", "Humedad (%)", "Viento (km/h)", "Riesgo de Incendio (%)"],
             data_calculator: (data) => {
+                const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
                 const avgHumidity = data.reduce((sum, d) => sum + d.humidity, 0) / data.length;
                 const avgWind = data.reduce((sum, d) => sum + d.windSpeed, 0) / data.length;
-                const fireRisk = Math.min(100, Math.max(0, (70 - avgHumidity) + (avgWind - 10) * 2));
-                return [Math.round(avgHumidity), Math.round(fireRisk)];
+                const fireRisk = Math.min(100, Math.max(0, (70 - avgHumidity) + (avgWind - 10) * 2 + (avgTemp - 25) * 3));
+                return [Math.round(avgTemp), Math.round(avgHumidity), Math.round(avgWind), Math.round(fireRisk)];
             },
             conditions: (data) => {
                 const avgHumidity = data.reduce((sum, d) => sum + d.humidity, 0) / data.length;
@@ -94,17 +103,52 @@ class ClimateAnalysisService {
         {
             title: "Degradación del Suelo",
             description: "La disminución de la lluvia y la mayor evaporación reducen la humedad del suelo, vital para la agricultura y los ecosistemas de sabana. Esto puede llevar a la desertificación y a la pérdida de tierras productivas.",
-            data_labels: ["Humedad del Suelo Actual (%)", "Humedad del Suelo Óptima (%)"],
+            data_labels: ["Humedad del Suelo (%)", "Fertilidad (%)", "Erosión (%)", "Productividad (%)"],
             data_calculator: (data) => {
                 const avgHumidity = data.reduce((sum, d) => sum + d.humidity, 0) / data.length;
                 const avgPrecip = data.reduce((sum, d) => sum + d.precipitation, 0) / data.length;
                 const soilMoisture = Math.min(100, Math.max(0, avgHumidity * 0.8 + avgPrecip * 5));
-                return [Math.round(soilMoisture), 80];
+                const fertility = Math.min(100, Math.max(0, soilMoisture * 0.9));
+                const erosion = Math.min(100, Math.max(0, (100 - soilMoisture) * 0.7));
+                const productivity = Math.min(100, Math.max(0, (soilMoisture + fertility) / 2 - erosion * 0.3));
+                return [Math.round(soilMoisture), Math.round(fertility), Math.round(erosion), Math.round(productivity)];
             },
             conditions: (data) => {
                 const avgHumidity = data.reduce((sum, d) => sum + d.humidity, 0) / data.length;
                 const avgPrecip = data.reduce((sum, d) => sum + d.precipitation, 0) / data.length;
                 return avgHumidity < 70 && avgPrecip < 3;
+            }
+        },
+        {
+            title: "Pérdida de Biodiversidad Marina",
+            description: "El aumento de la temperatura del mar y la acidificación de los océanos están afectando gravemente a los ecosistemas marinos. Los corales, peces y otras especies marinas están perdiendo sus hábitats naturales.",
+            data_labels: ["Acidificación del Océano (%)", "Pérdida de Biodiversidad (%)"],
+            data_calculator: (data) => {
+                const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
+                const acidification = Math.min(100, Math.max(0, (avgTemp - 28) * 8));
+                const biodiversityLoss = Math.min(100, Math.max(0, (avgTemp - 26) * 12));
+                return [Math.round(acidification), Math.round(biodiversityLoss)];
+            },
+            conditions: (data) => {
+                const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
+                return avgTemp > 29;
+            }
+        },
+        {
+            title: "Alteración de Migraciones",
+            description: "Los cambios en los patrones climáticos están afectando las rutas de migración de aves y otros animales. Esto puede llevar a la pérdida de especies que dependen de estos ciclos naturales.",
+            data_labels: ["Cambio en Rutas de Migración (%)", "Riesgo para Especies Migratorias (%)"],
+            data_calculator: (data) => {
+                const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
+                const avgWind = data.reduce((sum, d) => sum + d.windSpeed, 0) / data.length;
+                const migrationChange = Math.min(100, Math.max(0, (avgTemp - 20) * 5));
+                const speciesRisk = Math.min(100, Math.max(0, migrationChange + (avgWind - 10) * 2));
+                return [Math.round(migrationChange), Math.round(speciesRisk)];
+            },
+            conditions: (data) => {
+                const avgTemp = data.reduce((sum, d) => sum + d.temperature, 0) / data.length;
+                const avgWind = data.reduce((sum, d) => sum + d.windSpeed, 0) / data.length;
+                return avgTemp > 22 && avgWind > 12;
             }
         }
     ];
@@ -177,7 +221,11 @@ class ClimateAnalysisService {
      * Analyze climate data and generate dynamic impacts and eco tips
      */
     analyzeClimateData(data: ProcessedClimateData[], region: string): ClimateAnalysis {
+        console.log('ClimateAnalysisService - Analyzing data for region:', region);
+        console.log('ClimateAnalysisService - Data length:', data?.length);
+
         if (!data || data.length === 0) {
+            console.log('ClimateAnalysisService - No data, using default analysis');
             return this.getDefaultAnalysis(region);
         }
 
@@ -185,8 +233,12 @@ class ClimateAnalysisService {
         const relevantImpact = this.impactTemplates.find(template => template.conditions(data))
             || this.impactTemplates[0]; // Fallback to first template
 
+        console.log('ClimateAnalysisService - Selected impact:', relevantImpact.title);
+
         // Calculate impact data
         const impactData = relevantImpact.data_calculator(data);
+
+        console.log('ClimateAnalysisService - Calculated impact data:', impactData);
 
         // Find the most relevant eco tip
         const relevantTips = this.ecoTipTemplates
@@ -336,35 +388,47 @@ class ClimateAnalysisService {
      * Get default analysis when no data is available
      */
     private getDefaultAnalysis(region: string): ClimateAnalysis {
+        console.log('ClimateAnalysisService - Getting default analysis for region:', region);
+
         const defaults = {
             andes: {
                 impact_title: "Estrés en los Páramos Andinos",
-                impact_desc: "El aumento de la temperatura está causando que los ecosistemas de páramo, vitales para el suministro de agua de Colombia, se reduzcan.",
-                tip: "Usa el transporte público o la bicicleta. Reducir tu huella de carbono ayuda a frenar el calentamiento.",
+                impact_desc: "El aumento de la temperatura está causando que los ecosistemas de páramo, vitales para el suministro de agua de Colombia, se reduzcan. Especies únicas como el frailejón y el cóndor andino están perdiendo su hábitat natural.",
+                impact_data: [25, 45],
+                impact_labels: ["Impacto en Temporada Húmeda (%)", "Impacto en Temporada Seca (%)"],
+                tip: "Usa el transporte público o la bicicleta. Reducir tu huella de carbono ayuda a frenar el calentamiento que amenaza nuestros páramos.",
                 tip_icon: "🚲"
             },
             caribe: {
                 impact_title: "Blanqueamiento de Corales",
-                impact_desc: "Las temperaturas del mar inusualmente altas estresan a los corales, causando que expulsen las algas que viven en sus tejidos.",
-                tip: "Reduce el uso de plásticos de un solo uso. La contaminación plástica daña los arrecifes de coral.",
+                impact_desc: "Las temperaturas del mar inusualmente altas estresan a los corales, causando que expulsen las algas que viven en sus tejidos. Esto amenaza a especies como el pez loro y las tortugas marinas.",
+                impact_data: [30, 65],
+                impact_labels: ["Mortalidad de Coral Histórica (%)", "Riesgo de Mortalidad Actual (%)"],
+                tip: "Reduce el uso de plásticos de un solo uso. La contaminación plástica daña los arrecifes de coral y la vida marina.",
                 tip_icon: "🐢"
             },
             pacifico: {
                 impact_title: "Alteración de Ciclos Hídricos",
-                impact_desc: "La deforestación y el cambio climático alteran el ciclo del agua. Lluvias más intensas pueden causar erosión.",
-                tip: "Apoya la reforestación y protege los bosques locales. Los árboles son cruciales para regular el flujo de agua.",
+                impact_desc: "La deforestación y el cambio climático alteran el ciclo del agua. Lluvias más intensas pueden causar erosión y afectar a especies como la rana dorada y los anfibios endémicos.",
+                impact_data: [20, 50],
+                impact_labels: ["Aumento de Escorrentía (%)", "Riesgo para Anfibios (%)"],
+                tip: "Apoya la reforestación y protege los bosques locales. Los árboles son cruciales para regular el flujo de agua y prevenir la erosión.",
                 tip_icon: "🌳"
             },
             amazonia: {
                 impact_title: "Riesgo de Incendios Forestales",
-                impact_desc: "Períodos secos más largos y vientos fuertes crean las condiciones perfectas para la propagación de incendios.",
-                tip: "Reduce tu consumo de carne. La ganadería es uno de los principales motores de la deforestación.",
+                impact_desc: "Períodos secos más largos y vientos fuertes crean las condiciones perfectas para la propagación de incendios. Esto amenaza a especies como el jaguar, el delfín rosado y miles de especies de plantas.",
+                impact_data: [35, 60],
+                impact_labels: ["Humedad Relativa (%)", "Riesgo de Incendio Relativo (%)"],
+                tip: "Reduce tu consumo de carne. La ganadería es uno de los principales motores de la deforestación en la Amazonía.",
                 tip_icon: "🔥"
             },
             orinoquia: {
                 impact_title: "Degradación del Suelo",
-                impact_desc: "La disminución de la lluvia y la mayor evaporación reducen la humedad del suelo, vital para la agricultura.",
-                tip: "Conserva el agua en casa. Cada gota cuenta, especialmente durante períodos de sequía.",
+                impact_desc: "La disminución de la lluvia y la mayor evaporación reducen la humedad del suelo, vital para la agricultura y los ecosistemas de sabana. Esto afecta a especies como el venado de cola blanca y las aves migratorias.",
+                impact_data: [25, 55],
+                impact_labels: ["Humedad del Suelo Actual (%)", "Humedad del Suelo Óptima (%)"],
+                tip: "Conserva el agua en casa. Cada gota cuenta, especialmente durante períodos de sequía. Repara las fugas y usa el agua de manera consciente.",
                 tip_icon: "💧"
             }
         };
@@ -373,8 +437,6 @@ class ClimateAnalysisService {
 
         return {
             ...defaultData,
-            impact_data: [20, 40],
-            impact_labels: ["Impacto Actual (%)", "Riesgo Proyectado (%)"],
             enso: "Neutral",
             enso_desc: "Condiciones climáticas promedio, pero la tendencia al calentamiento continúa.",
             risk_level: 'medium',

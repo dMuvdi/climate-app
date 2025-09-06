@@ -35,11 +35,11 @@ export const getDefaultStartDate = (): string => {
 };
 
 /**
- * Get default end date (today)
+ * Get default end date (3 days before today)
  */
 export const getDefaultEndDate = (): string => {
-    const today = new Date();
-    return formatDate(today);
+    const threeDaysAgo = subDays(new Date(), 3);
+    return formatDate(threeDaysAgo);
 };
 
 /**
@@ -48,9 +48,9 @@ export const getDefaultEndDate = (): string => {
 export const validateDateRange = (startDate: string, endDate: string): boolean => {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const today = new Date();
+    const threeDaysAgo = subDays(new Date(), 3);
 
-    return start <= end && start >= new Date('1981-01-01') && end <= today;
+    return start <= end && start >= new Date('1981-01-01') && end <= threeDaysAgo;
 };
 
 /**
@@ -60,12 +60,12 @@ export const getValidDateRange = (startDate: string, endDate: string): { start: 
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // NASA POWER API has data from 1981 to present
+    // NASA POWER API has data from 1981 to present, but we limit to 3 days ago
     const minDate = new Date('1981-01-01');
-    const today = new Date();
+    const threeDaysAgo = subDays(new Date(), 3);
 
-    const validStart = start < minDate ? minDate : start > today ? today : start;
-    const validEnd = end < minDate ? minDate : end > today ? today : end;
+    const validStart = start < minDate ? minDate : start > threeDaysAgo ? threeDaysAgo : start;
+    const validEnd = end < minDate ? minDate : end > threeDaysAgo ? threeDaysAgo : end;
 
     return {
         start: formatDate(validStart),
@@ -80,12 +80,12 @@ export const getValidDateRangeForAPI = (startDate: string, endDate: string): { s
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // NASA POWER API has data from 1981 to present
+    // NASA POWER API has data from 1981 to present, but we limit to 3 days ago
     const minDate = new Date('1981-01-01');
-    const today = new Date();
+    const threeDaysAgo = subDays(new Date(), 3);
 
-    const validStart = start < minDate ? minDate : start > today ? today : start;
-    const validEnd = end < minDate ? minDate : end > today ? today : end;
+    const validStart = start < minDate ? minDate : start > threeDaysAgo ? threeDaysAgo : start;
+    const validEnd = end < minDate ? minDate : end > threeDaysAgo ? threeDaysAgo : end;
 
     return {
         start: formatDateForAPI(validStart),

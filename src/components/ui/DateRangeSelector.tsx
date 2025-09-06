@@ -17,7 +17,10 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
     className = ''
 }) => {
     const isDateRangeValid = validateDateRange(startDate, endDate);
-    const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    // Calculate date that is 2 days before today
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 3);
+    const maxDate = twoDaysAgo.toISOString().split('T')[0]; // Format as YYYY-MM-DD
 
     return (
         <div className={`mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 ${className}`}>
@@ -33,7 +36,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
                     value={startDate}
                     onChange={(e) => onStartDateChange(e.target.value)}
                     min="1981-01-01"
-                    max={today}
+                    max={maxDate}
                 />
             </div>
             <div>
@@ -48,7 +51,7 @@ export const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
                     value={endDate}
                     onChange={(e) => onEndDateChange(e.target.value)}
                     min="1981-01-01"
-                    max={today}
+                    max={maxDate}
                 />
             </div>
             {!isDateRangeValid && (
