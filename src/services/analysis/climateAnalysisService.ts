@@ -218,6 +218,34 @@ class ClimateAnalysisService {
     ];
 
     /**
+     * Get the appropriate impact template based on region
+     */
+    private getImpactTemplateByRegion(region: string, data: ProcessedClimateData[]): ImpactTemplate {
+        const regionTemplateMap = {
+            andes: 0,      // "Estrés en los Páramos Andinos"
+            caribe: 1,     // "Blanqueamiento de Corales"
+            pacifico: 2,   // "Alteración de Ciclos Hídricos"
+            amazonia: 3,   // "Riesgo de Incendios Forestales"
+            orinoquia: 4   // "Degradación del Suelo"
+        };
+
+        const templateIndex = regionTemplateMap[region as keyof typeof regionTemplateMap];
+
+        if (templateIndex !== undefined && this.impactTemplates[templateIndex]) {
+            const regionTemplate = this.impactTemplates[templateIndex];
+            // Check if the template's conditions are met, if not, still use it but log it
+            if (!regionTemplate.conditions(data)) {
+                console.log(`ClimateAnalysisService - Using region template for ${region} even though conditions not fully met`);
+            }
+            return regionTemplate;
+        }
+
+        // Fallback to condition-based selection if region not found
+        console.log(`ClimateAnalysisService - Region ${region} not mapped, falling back to condition-based selection`);
+        return this.impactTemplates.find(template => template.conditions(data)) || this.impactTemplates[0];
+    }
+
+    /**
      * Analyze climate data and generate dynamic impacts and eco tips
      */
     analyzeClimateData(data: ProcessedClimateData[], region: string): ClimateAnalysis {
@@ -229,9 +257,8 @@ class ClimateAnalysisService {
             return this.getDefaultAnalysis(region);
         }
 
-        // Find the most relevant impact template
-        const relevantImpact = this.impactTemplates.find(template => template.conditions(data))
-            || this.impactTemplates[0]; // Fallback to first template
+        // Find the impact template based on region first, then conditions
+        const relevantImpact = this.getImpactTemplateByRegion(region, data);
 
         console.log('ClimateAnalysisService - Selected impact:', relevantImpact.title);
 
@@ -394,40 +421,40 @@ class ClimateAnalysisService {
             andes: {
                 impact_title: "Estrés en los Páramos Andinos",
                 impact_desc: "El aumento de la temperatura está causando que los ecosistemas de páramo, vitales para el suministro de agua de Colombia, se reduzcan. Especies únicas como el frailejón y el cóndor andino están perdiendo su hábitat natural.",
-                impact_data: [25, 45],
-                impact_labels: ["Impacto en Temporada Húmeda (%)", "Impacto en Temporada Seca (%)"],
+                impact_data: [25, 35, 30],
+                impact_labels: ["Estrés por Temperatura (%)", "Pérdida de Humedad (%)", "Riesgo de Especies (%)"],
                 tip: "Usa el transporte público o la bicicleta. Reducir tu huella de carbono ayuda a frenar el calentamiento que amenaza nuestros páramos.",
                 tip_icon: "🚲"
             },
             caribe: {
                 impact_title: "Blanqueamiento de Corales",
                 impact_desc: "Las temperaturas del mar inusualmente altas estresan a los corales, causando que expulsen las algas que viven en sus tejidos. Esto amenaza a especies como el pez loro y las tortugas marinas.",
-                impact_data: [30, 65],
-                impact_labels: ["Mortalidad de Coral Histórica (%)", "Riesgo de Mortalidad Actual (%)"],
+                impact_data: [40, 35, 15, 10],
+                impact_labels: ["Coral Saludable (%)", "Coral Estresado (%)", "Coral Muerto (%)", "Recuperación (%)"],
                 tip: "Reduce el uso de plásticos de un solo uso. La contaminación plástica daña los arrecifes de coral y la vida marina.",
                 tip_icon: "🐢"
             },
             pacifico: {
                 impact_title: "Alteración de Ciclos Hídricos",
                 impact_desc: "La deforestación y el cambio climático alteran el ciclo del agua. Lluvias más intensas pueden causar erosión y afectar a especies como la rana dorada y los anfibios endémicos.",
-                impact_data: [20, 50],
-                impact_labels: ["Aumento de Escorrentía (%)", "Riesgo para Anfibios (%)"],
+                impact_data: [55, 30, 15],
+                impact_labels: ["Escorrentía Normal (%)", "Escorrentía Alta (%)", "Erosión del Suelo (%)"],
                 tip: "Apoya la reforestación y protege los bosques locales. Los árboles son cruciales para regular el flujo de agua y prevenir la erosión.",
                 tip_icon: "🌳"
             },
             amazonia: {
                 impact_title: "Riesgo de Incendios Forestales",
                 impact_desc: "Períodos secos más largos y vientos fuertes crean las condiciones perfectas para la propagación de incendios. Esto amenaza a especies como el jaguar, el delfín rosado y miles de especies de plantas.",
-                impact_data: [35, 60],
-                impact_labels: ["Humedad Relativa (%)", "Riesgo de Incendio Relativo (%)"],
+                impact_data: [28, 88, 15, 35],
+                impact_labels: ["Temperatura (°C)", "Humedad (%)", "Viento (km/h)", "Riesgo de Incendio (%)"],
                 tip: "Reduce tu consumo de carne. La ganadería es uno de los principales motores de la deforestación en la Amazonía.",
                 tip_icon: "🔥"
             },
             orinoquia: {
                 impact_title: "Degradación del Suelo",
                 impact_desc: "La disminución de la lluvia y la mayor evaporación reducen la humedad del suelo, vital para la agricultura y los ecosistemas de sabana. Esto afecta a especies como el venado de cola blanca y las aves migratorias.",
-                impact_data: [25, 55],
-                impact_labels: ["Humedad del Suelo Actual (%)", "Humedad del Suelo Óptima (%)"],
+                impact_data: [45, 40, 25, 60],
+                impact_labels: ["Humedad del Suelo (%)", "Fertilidad (%)", "Erosión (%)", "Productividad (%)"],
                 tip: "Conserva el agua en casa. Cada gota cuenta, especialmente durante períodos de sequía. Repara las fugas y usa el agua de manera consciente.",
                 tip_icon: "💧"
             }
